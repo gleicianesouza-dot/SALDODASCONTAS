@@ -163,9 +163,8 @@
 
   // --- Dados fornecidos ---
   const rawData = [
-
-// 11/05/2026
-    {date:"2026-05-11", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:150.47, totalMes:395748.38, totalGeral:4219161.29},
+    // 11/05/2026
+    {date:"2026-05-11", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:150.47, totalMes:395745.38, totalGeral:4219161.29},
     {date:"2026-05-11", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:11739.66, totalMes:null, totalGeral:null},
     {date:"2026-05-11", account:"C. CETAM", type:"CONTA CORRENTE", saldo:229783.77, totalMes:null, totalGeral:null},
     {date:"2026-05-11", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
@@ -174,10 +173,9 @@
     {date:"2026-05-11", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:154.77, totalMes:null, totalGeral:null},
     {date:"2026-05-11", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:3302.67, totalMes:null, totalGeral:null},
     {date:"2026-05-11", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:3823412.91, totalGeral:null},
-    {date:"2026-05-11", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3823.412.86, totalMes:null, totalGeral:null},
+    {date:"2026-05-11", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3823412.86, totalMes:null, totalGeral:null},
 
-
-// 04/05/2026
+    // 04/05/2026
     {date:"2026-05-04", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:150.47, totalMes:416649.97, totalGeral:4240062.88},
     {date:"2026-05-04", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:11717.93, totalMes:null, totalGeral:null},
     {date:"2026-05-04", account:"C. CETAM", type:"CONTA CORRENTE", saldo:229182.64, totalMes:null, totalGeral:null},
@@ -190,12 +188,12 @@
     {date:"2026-05-04", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3823412.86, totalMes:null, totalGeral:null},
 
     // 30/04/2026
-    {date:"2026-04-20", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:150.47, totalMes:435679.24, totalGeral:4259092.15},
-    {date:"2026-04-30", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:11.745.96, totalMes:null, totalGeral:null},
+    {date:"2026-04-30", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:150.47, totalMes:435679.24, totalGeral:4259092.15},
+    {date:"2026-04-30", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:11745.96, totalMes:null, totalGeral:null},
     {date:"2026-04-30", account:"C. CETAM", type:"CONTA CORRENTE", saldo:229184.68, totalMes:null, totalGeral:null},
     {date:"2026-04-30", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
     {date:"2026-04-30", account:"C. FILIAL BRASÍLIA", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
-    {date:"2026-04-30", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:191140.69, totalMes:null, totalGeral:null},
+    {date:"2026-04-30", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:191140.69, totalMes:null, totalGeral:null}, // FIX: Vírgula corrigida para ponto
     {date:"2026-04-30", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:154.77, totalMes:null, totalGeral:null},
     {date:"2026-04-30", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:3302.67, totalMes:null, totalGeral:null},
     {date:"2026-04-30", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:3823412.91, totalGeral:null},
@@ -556,7 +554,7 @@
       return; 
     }
     let html = `<table class="w-full text-sm text-left text-slate-300 whitespace-nowrap">
-                  <thead class="text-xs text-slate-400 uppercase bg-slate-800/80 sticky top-0">
+                  <thead class="text-xs text-slate-400 uppercase bg-slate-800/80 sticky top-0 z-10">
                     <tr>
                       <th class="px-6 py-4 font-semibold rounded-tl-lg">Data</th>
                       <th class="px-6 py-4 font-semibold">Conta</th>

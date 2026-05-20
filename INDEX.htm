@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dashboard de Saldo de Contas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS para estilização moderna e responsiva -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js para os gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Lucide para ícones -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* Scrollbar personalizada para tema escuro */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; border: 2px solid #0f172a; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<!-- Fundo azul escuro com gradiente radial para efeito premium -->
+<body class="bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-950 to-black text-slate-300 min-h-screen p-4 md:p-8">
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Cabeçalho e Filtros -->
+    <header class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-slate-800">
+      <div>
+        <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+          <i data-lucide="layout-dashboard" class="text-blue-500"></i>
+          Dashboard de Saldos
+        </h1>
+        <p class="text-sm text-slate-400 mt-1">Acompanhamento financeiro de contas e filiais</p>
+      </div>
+      
+      <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+        <div class="flex-1">
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Data de Referência</label>
+          <select id="dateSelect" class="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"></select>
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Conta</label>
+          <select id="accountSelect" class="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+            <option value="All">Todas as Contas</option>
+          </select>
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Tipo de Conta</label>
+          <select id="typeSelect" class="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+            <option value="All">Todos os Tipos</option>
+            <option value="CONTA CORRENTE">Conta Corrente</option>
+            <option value="CONTA INVESTIMENTO">Conta Investimento</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button id="resetBtn" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium rounded-lg px-4 py-2 text-sm transition flex items-center gap-2 justify-center shadow-sm">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Limpar
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- KPIs -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+      <div class="bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl shadow-xl border border-slate-800 flex items-center gap-4 relative overflow-hidden">
+        <div class="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 flex-shrink-0 z-10">
+          <i data-lucide="wallet"></i>
+        </div>
+        <div class="z-10">
+          <h3 class="text-sm font-semibold text-slate-400">Saldo Selecionado</h3>
+          <p id="kpiSaldo" class="text-2xl font-bold text-white mt-1">R$ 0,00</p>
+        </div>
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500 rounded-full opacity-10 blur-2xl pointer-events-none"></div>
+      </div>
+
+      <div class="bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl shadow-xl border border-slate-800 flex items-center gap-4 relative overflow-hidden">
+        <div class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 z-10">
+          <i data-lucide="calendar-days"></i>
+        </div>
+        <div class="z-10">
+          <h3 class="text-sm font-semibold text-slate-400">Total por Mês</h3>
+          <p id="kpiTotalMes" class="text-2xl font-bold text-white mt-1">R$ 0,00</p>
+        </div>
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500 rounded-full opacity-10 blur-2xl pointer-events-none"></div>
+      </div>
+
+      <div class="bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl shadow-xl border border-slate-800 flex items-center gap-4 relative overflow-hidden">
+        <div class="w-12 h-12 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 z-10">
+          <i data-lucide="bar-chart-3"></i>
+        </div>
+        <div class="z-10">
+          <h3 class="text-sm font-semibold text-slate-400">Total Geral</h3>
+          <p id="kpiTotalGeral" class="text-2xl font-bold text-white mt-1">R$ 0,00</p>
+        </div>
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-purple-500 rounded-full opacity-10 blur-2xl pointer-events-none"></div>
+      </div>
+    </section>
+
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Gráfico de Linha (Ocupa 2 colunas no desktop) -->
+      <div class="lg:col-span-2 bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl shadow-xl border border-slate-800">
+        <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i data-lucide="trending-up" class="w-4 h-4 text-blue-500"></i> Histórico de Saldos
+        </h3>
+        <div class="relative w-full h-[300px]">
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Gráficos Menores -->
+      <div class="flex flex-col gap-6">
+        <div class="bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl shadow-xl border border-slate-800 flex-1">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <i data-lucide="bar-chart-horizontal" class="w-4 h-4 text-emerald-500"></i> Maiores Saldos (Data)
+          </h3>
+          <div class="relative w-full h-[180px]">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+        <div class="bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl shadow-xl border border-slate-800 flex-1">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <i data-lucide="pie-chart" class="w-4 h-4 text-purple-500"></i> Distribuição por Tipo
+          </h3>
+          <div class="relative w-full h-[180px] flex justify-center">
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tabela de Dados -->
+    <div class="bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl shadow-xl border border-slate-800">
+      <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+        <i data-lucide="table" class="w-4 h-4 text-slate-400"></i> Detalhamento (Data Selecionada)
+      </h3>
+      <div id="tableWrap" class="overflow-x-auto max-h-[360px] rounded-lg border border-slate-800/80">
+        <!-- Tabela será renderizada aqui -->
+      </div>
+    </div>
+
+    <footer class="text-center text-xs text-slate-500 py-4">
+      Dados Bancarios. Desenvolvido automaticamente.
+    </footer>
+  </div>
+
+<script>
+  // Inicializa os ícones do Lucide
+  lucide.createIcons();
+
+  // Cores da paleta para os gráficos adaptadas para dark mode
+  const chartColors = [
+    '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', 
+    '#14b8a6', '#ec4899', '#6366f1', '#f97316', '#06b6d4'
+  ];
+
+  // --- Dados fornecidos ---
+  const rawData = [
+    // 18/05/2026
+    {date:"2026-05-18", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:150.47, totalMes:652717.81, totalGeral:4476130.72},
+    {date:"2026-05-18", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:11761.48, totalMes:null, totalGeral:null},
+    {date:"2026-05-18", account:"C. CETAM", type:"CONTA CORRENTE", saldo:532127.80, totalMes:null, totalGeral:null},
+    {date:"2026-05-18", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-05-18", account:"C. FILIAL BRASÍLIA", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-05-18", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:105220.62, totalMes:null, totalGeral:null},
+    {date:"2026-05-18", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:154.77, totalMes:null, totalGeral:null},
+    {date:"2026-05-18", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:3302.67, totalMes:null, totalGeral:null},
+    {date:"2026-05-18", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:3823412.91, totalGeral:4476130.72},
+    {date:"2026-05-18", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3823412.86, totalMes:3823412.91, totalGeral:4476130.72},
+
+    // 11/05/2026
+    {date:"2026-05-11", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:150.47, totalMes:395745.38, totalGeral:4219161.29},
+    {date:"2026-05-11", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:11739.66, totalMes:null, totalGeral:null},
+    {date:"2026-05-11", account:"C. CETAM", type:"CONTA CORRENTE", saldo:229783.77, totalMes:null, totalGeral:null},
+    {date:"2026-05-11", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-05-11", account:"C. FILIAL BRASÍLIA", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-05-11", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:150617.04, totalMes:null, totalGeral:null},
+    {date:"2026-05-11", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:154.77, totalMes:null, totalGeral:null},
+    {date:"2026-05-11", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:3302.67, totalMes:null, totalGeral:null},
+    {date:"2026-05-11", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:3823412.91, totalGeral:4219161.29},
+    {date:"2026-05-11", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3823412.86, totalMes:3823412.91, totalGeral:4219161.29},
+
+    // 04/05/2026
+    {date:"2026-05-04", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:150.47, totalMes:416649.97, totalGeral:4240062.88},
+    {date:"2026-05-04", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:11717.93, totalMes:null, totalGeral:null},
+    {date:"2026-05-04", account:"C. CETAM", type:"CONTA CORRENTE", saldo:229182.64, totalMes:null, totalGeral:null},
+    {date:"2026-05-04", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-05-04", account:"C. FILIAL BRASÍLIA", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-05-04", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:172141.49, totalMes:null, totalGeral:null},
+    {date:"2026-05-04", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:154.77, totalMes:null, totalGeral:null},
+    {date:"2026-05-04", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:3302.67, totalMes:null, totalGeral:null},
+    {date:"2026-05-04", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:3823412.91, totalGeral:4240062.88},
+    {date:"2026-05-04", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3823412.86, totalMes:3823412.91, totalGeral:4240062.88},
+
+    // 30/04/2026
+    {date:"2026-04-30", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:150.47, totalMes:435679.24, totalGeral:4259092.15},
+    {date:"2026-04-30", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:11745.96, totalMes:null, totalGeral:null},
+    {date:"2026-04-30", account:"C. CETAM", type:"CONTA CORRENTE", saldo:229184.68, totalMes:null, totalGeral:null},
+    {date:"2026-04-30", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-04-30", account:"C. FILIAL BRASÍLIA", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-04-30", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:191140.69, totalMes:null, totalGeral:null},
+    {date:"2026-04-30", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:154.77, totalMes:null, totalGeral:null},
+    {date:"2026-04-30", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:3302.67, totalMes:null, totalGeral:null},
+    {date:"2026-04-30", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:3823412.91, totalGeral:4259092.15},
+    {date:"2026-04-30", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3823412.86, totalMes:3823412.91, totalGeral:4259092.15},
+
+    // 30/03/2026
+    {date:"2026-03-30", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:15727.33, totalMes:206693.31, totalGeral:5833505.79},
+    {date:"2026-03-30", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:1398523.29, totalMes:null, totalGeral:null},
+    {date:"2026-03-30", account:"C. CETAM", type:"CONTA CORRENTE", saldo:655183.95, totalMes:null, totalGeral:null},
+    {date:"2026-03-30", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-03-30", account:"C. FILIAL BRASÍLIA", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-03-30", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:30.17, totalMes:null, totalGeral:null},
+    {date:"2026-03-30", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:49.56, totalMes:null, totalGeral:null},
+    {date:"2026-03-30", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:179.01, totalMes:null, totalGeral:null},
+    {date:"2026-03-30", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:3763812.48, totalGeral:null},
+    {date:"2026-03-30", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3763812.43, totalMes:null, totalGeral:null},
+
+    // 28/02/2026
+    {date:"2026-02-28", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:1243.01, totalMes:736800.78, totalGeral:4500613.26},
+    {date:"2026-02-28", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:90.25, totalMes:null, totalGeral:null},
+    {date:"2026-02-28", account:"C. CETAM", type:"CONTA CORRENTE", saldo:655184.22, totalMes:null, totalGeral:null},
+    {date:"2026-02-28", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-02-28", account:"C. FILIAL CARAJÁS LINHA VERDE", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-02-28", account:"C. FILIAL BRASÍLIA", type:"CONTA CORRENTE", saldo:20.92, totalMes:null, totalGeral:null},
+    {date:"2026-02-28", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:78854.05, totalMes:null, totalGeral:null},
+    {date:"2026-02-28", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:209.32, totalMes:null, totalGeral:null},
+    {date:"2026-02-28", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:1199.01, totalMes:null, totalGeral:null},
+    {date:"2026-02-28", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:3763812.48, totalGeral:null},
+    {date:"2026-02-28", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3763812.43, totalMes:null, totalGeral:null},
+
+    // 31/01/2026
+    {date:"2026-01-31", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:15972.43, totalMes:1701933.89, totalGeral:5433863.86},
+    {date:"2026-01-31", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:7536.07, totalMes:null, totalGeral:null},
+    {date:"2026-01-31", account:"C. CETAM", type:"CONTA CORRENTE", saldo:1511951.42, totalMes:null, totalGeral:null},
+    {date:"2026-01-31", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-01-31", account:"C. FILIAL CARAJÁS LINHA VERDE", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2026-01-31", account:"C. FILIAL BRASÍLIA", type:"CONTA CORRENTE", saldo:55.80, totalMes:null, totalGeral:null},
+    {date:"2026-01-31", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:153855.76, totalMes:null, totalGeral:null},
+    {date:"2026-01-31", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:32512.85, totalMes:null, totalGeral:null},
+    {date:"2026-01-31", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:49.56, totalMes:null, totalGeral:null},
+    {date:"2026-01-31", account:"C. MOVIMENTO", type:"CONTA INVESTIMENTO", saldo:0, totalMes:3731929.97, totalGeral:null},
+    {date:"2026-01-31", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:null, totalGeral:null},
+    {date:"2026-01-31", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3731929.82, totalMes:null, totalGeral:null},
+
+    // 31/12/2025
+    {date:"2025-12-31", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:73424.51, totalMes:3616785.44, totalGeral:7295059.77},
+    {date:"2025-12-31", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:696545.27, totalMes:null, totalGeral:null},
+    {date:"2025-12-31", account:"C. CETAM", type:"CONTA CORRENTE", saldo:2724083.59, totalMes:null, totalGeral:null},
+    {date:"2025-12-31", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2025-12-31", account:"C. FILIAL CARAJÁS LINHA VERDE", type:"CONTA CORRENTE", saldo:0, totalMes:null, totalGeral:null},
+    {date:"2025-12-31", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:91285.22, totalMes:null, totalGeral:null},
+    {date:"2025-12-31", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:27833.20, totalMes:null, totalGeral:null},
+    {date:"2025-12-31", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:3613.65, totalMes:null, totalGeral:null},
+    {date:"2025-12-31", account:"C. MOVIMENTO", type:"CONTA INVESTIMENTO", saldo:0, totalMes:3678274.38, totalGeral:null},
+    {date:"2025-12-31", account:"C. DETRAN", type:"CONTA INVESTIMENTO", saldo:0.05, totalMes:null, totalGeral:null},
+    {date:"2025-12-31", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3678274.33, totalMes:null, totalGeral:null},
+
+    // 30/11/2025
+    {date:"2025-11-30", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:124528.05, totalMes:2946763.16, totalGeral:6584165.20},
+    {date:"2025-11-30", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:1003.35, totalMes:null, totalGeral:null},
+    {date:"2025-11-30", account:"C. CETAM", type:"CONTA CORRENTE", saldo:2804774.87, totalMes:null, totalGeral:null},
+    {date:"2025-11-30", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:6.79, totalMes:null, totalGeral:null},
+    {date:"2025-11-30", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:5516.65, totalMes:null, totalGeral:null},
+    {date:"2025-11-30", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:10750.13, totalMes:null, totalGeral:null},
+    {date:"2025-11-30", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:183.32, totalMes:null, totalGeral:null},
+    {date:"2025-11-30", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3637401.99, totalMes:null, totalGeral:null},
+    
+    // 31/10/2025
+    {date:"2025-10-31", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:803.91, totalMes:3535142.47, totalGeral:7155390.57},
+    {date:"2025-10-31", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:887804.19, totalMes:null, totalGeral:null},
+    {date:"2025-10-31", account:"C. CETAM", type:"CONTA CORRENTE", saldo:2585864.19, totalMes:null, totalGeral:null},
+    {date:"2025-10-31", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:640.43, totalMes:null, totalGeral:null},
+    {date:"2025-10-31", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:41499.94, totalMes:null, totalGeral:null},
+    {date:"2025-10-31", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:17792.67, totalMes:null, totalGeral:null},
+    {date:"2025-10-31", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:737.14, totalMes:null, totalGeral:null},
+    {date:"2025-10-31", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:3620248.05, totalMes:null, totalGeral:null},  
+
+    // 30/09/2025
+    {date:"2025-09-30", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:10114.04, totalMes:5624126.24, totalGeral:8212692.29},
+    {date:"2025-09-30", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:2036497.06, totalMes:null, totalGeral:null},
+    {date:"2025-09-30", account:"C. CETAM", type:"CONTA CORRENTE", saldo:2466015.33, totalMes:null, totalGeral:null},
+    {date:"2025-09-30", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:220.69, totalMes:null, totalGeral:null},
+    {date:"2025-09-30", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:1078261.22, totalMes:null, totalGeral:null},
+    {date:"2025-09-30", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:30472.66, totalMes:null, totalGeral:null},
+    {date:"2025-09-30", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:2545.24, totalMes:null, totalGeral:null},
+    {date:"2025-09-30", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:2588566.00, totalMes:null, totalGeral:null},
+
+    // 31/08/2025
+    {date:"2025-08-31", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:52361.87, totalMes:2143332.78, totalGeral:4602903.35},
+    {date:"2025-08-31", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:4680.59, totalMes:null, totalGeral:null},
+    {date:"2025-08-31", account:"C. CETAM", type:"CONTA CORRENTE", saldo:1561229.03, totalMes:null, totalGeral:null},
+    {date:"2025-08-31", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:2199.59, totalMes:null, totalGeral:null},
+    {date:"2025-08-31", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:476053.94, totalMes:null, totalGeral:null},
+    {date:"2025-08-31", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:45409.32, totalMes:null, totalGeral:null},
+    {date:"2025-08-31", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:1398.44, totalMes:null, totalGeral:null},
+    {date:"2025-08-31", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:2459570.52, totalMes:null, totalGeral:null},
+
+    // 31/07/2025
+    {date:"2025-07-31", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:19205.28, totalMes:3310114.47, totalGeral:5493016.40},
+    {date:"2025-07-31", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:873140.22, totalMes:null, totalGeral:null},
+    {date:"2025-07-31", account:"C. CETAM", type:"CONTA CORRENTE", saldo:1873723.71, totalMes:null, totalGeral:null},
+    {date:"2025-07-31", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:6543.02, totalMes:null, totalGeral:null},
+    {date:"2025-07-31", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:535548.11, totalMes:null, totalGeral:null},
+    {date:"2025-07-31", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:889.88, totalMes:null, totalGeral:null},
+    {date:"2025-07-31", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:1064.25, totalMes:null, totalGeral:null},
+    {date:"2025-07-31", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:1203652.27, totalMes:null, totalGeral:null},
+
+    // 30/06/2025
+    {date:"2025-06-30", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:9478.11, totalMes:3581619.77, totalGeral:5737058.48},
+    {date:"2025-06-30", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:1252510.74, totalMes:null, totalGeral:null},
+    {date:"2025-06-30", account:"C. CETAM", type:"CONTA CORRENTE", saldo:1903281.23, totalMes:null, totalGeral:null},
+    {date:"2025-06-30", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:3086.85, totalMes:null, totalGeral:null},
+    {date:"2025-06-30", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:389004.32, totalMes:null, totalGeral:null},
+    {date:"2025-06-30", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:5038.50, totalMes:null, totalGeral:null},
+    {date:"2025-06-30", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:19220.02, totalMes:null, totalGeral:null},
+    {date:"2025-06-30", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:1188336.74, totalMes:null, totalGeral:null},
+
+    // 31/05/2025
+    {date:"2025-05-31", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:7311.13, totalMes:3133563.96, totalGeral:5265628.25},
+    {date:"2025-05-31", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:919197.78, totalMes:null, totalGeral:null},
+    {date:"2025-05-31", account:"C. CETAM", type:"CONTA CORRENTE", saldo:1883334.88, totalMes:null, totalGeral:null},
+    {date:"2025-05-31", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:1504.20, totalMes:null, totalGeral:null},
+    {date:"2025-05-31", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:261300.31, totalMes:null, totalGeral:null},
+    {date:"2025-05-31", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:59334.08, totalMes:null, totalGeral:null},
+    {date:"2025-05-31", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:1581.58, totalMes:null, totalGeral:null},
+    {date:"2025-05-31", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:1175271.51, totalMes:null, totalGeral:null},
+
+     // 30/04/2025
+    {date:"2025-04-30", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:19391.59, totalMes:2660201.77, totalGeral:4786772.80},
+    {date:"2025-04-30", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:1109410.40, totalMes:null, totalGeral:null},
+    {date:"2025-04-30", account:"C. CETAM", type:"CONTA CORRENTE", saldo:1304246.85, totalMes:null, totalGeral:null},
+    {date:"2025-04-30", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:1573.40, totalMes:null, totalGeral:null},
+    {date:"2025-04-30", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:157623.77, totalMes:null, totalGeral:null},
+    {date:"2025-04-30", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:65376.59, totalMes:null, totalGeral:null},
+    {date:"2025-04-30", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:2579.17, totalMes:null, totalGeral:null},
+    {date:"2025-04-30", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:1172224.47, totalMes:null, totalGeral:null},
+
+    // 31/03/2025
+    {date:"2025-03-31", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:9717.97, totalMes:1973089.17, totalGeral:4077894.57},
+    {date:"2025-03-31", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:1210506.00, totalMes:null, totalGeral:null},
+    {date:"2025-03-31", account:"C. CETAM", type:"CONTA CORRENTE", saldo:724853.37, totalMes:null, totalGeral:null},
+    {date:"2025-03-31", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:6648.88, totalMes:null, totalGeral:null},
+    {date:"2025-03-31", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:16554.39, totalMes:null, totalGeral:null},
+    {date:"2025-03-31", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:736.97, totalMes:null, totalGeral:null},
+    {date:"2025-03-31", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:4071.59, totalMes:null, totalGeral:null},
+    {date:"2025-03-31", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:1160057.35, totalMes:null, totalGeral:null},
+    
+    // 28/02/2025
+    {date:"2025-02-28", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:16559.02, totalMes:1067228.61, totalGeral:3152054.95},
+    {date:"2025-02-28", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:125639.15, totalMes:null, totalGeral:null},
+    {date:"2025-02-28", account:"C. CETAM", type:"CONTA CORRENTE", saldo:744951.40, totalMes:null, totalGeral:null},
+    {date:"2025-02-28", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:739.23, totalMes:null, totalGeral:null},
+    {date:"2025-02-28", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:143426.97, totalMes:null, totalGeral:null},
+    {date:"2025-02-28", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:31741.25, totalMes:null, totalGeral:null},
+    {date:"2025-02-28", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:4171.59, totalMes:null, totalGeral:null},
+    {date:"2025-02-28", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:1148809.20, totalMes:null, totalGeral:null},
+
+    // 31/01/2025
+    {date:"2025-01-31", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:72603.78, totalMes:1619898.41, totalGeral:3684346.48},
+    {date:"2025-01-31", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:117510.72, totalMes:null, totalGeral:null},
+    {date:"2025-01-31", account:"C. CETAM", type:"CONTA CORRENTE", saldo:1366419.86, totalMes:null, totalGeral:null},
+    {date:"2025-01-31", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:555.75, totalMes:null, totalGeral:null},
+    {date:"2025-01-31", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:22513.80, totalMes:null, totalGeral:null},
+    {date:"2025-01-31", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:34040.85, totalMes:null, totalGeral:null},
+    {date:"2025-01-31", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:6214.65, totalMes:null, totalGeral:null},
+    {date:"2025-01-31", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:1137317.56, totalMes:null, totalGeral:null},
+
+    // 30/12/2024
+    {date:"2024-12-30", account:"C. MOVIMENTO", type:"CONTA CORRENTE", saldo:8233.17, totalMes:4030333.66, totalGeral:6067389.65},
+    {date:"2024-12-30", account:"C. PRODAM", type:"CONTA CORRENTE", saldo:2151409.59, totalMes:null, totalGeral:null},
+    {date:"2024-12-30", account:"C. CETAM", type:"CONTA CORRENTE", saldo:1814487.33, totalMes:null, totalGeral:null},
+    {date:"2024-12-30", account:"C. FILIAL CARAJÁS", type:"CONTA CORRENTE", saldo:3701.63, totalMes:null, totalGeral:null},
+    {date:"2024-12-30", account:"C. SAFRA", type:"CONTA CORRENTE", saldo:19517.81, totalMes:null, totalGeral:null},
+    {date:"2024-12-30", account:"C. WALLETZ MATRIZ", type:"CONTA CORRENTE", saldo:2055.63, totalMes:null, totalGeral:null},
+    {date:"2024-12-30", account:"C. WALLETZ - SJC", type:"CONTA CORRENTE", saldo:764.69, totalMes:null, totalGeral:null},
+    {date:"2024-12-30", account:"C. SAFRA", type:"CONTA INVESTIMENTO", saldo:1119213.89, totalMes:null, totalGeral:null},
+  ];
+
+  // --- Utilitários ---
+  function fmtBR(value){
+    if(value === null || value === undefined) return "R$ 0,00";
+    return value.toLocaleString('pt-BR',{style:'currency', currency:'BRL'});
+  }
+  function unique(arr){ return Array.from(new Set(arr)); }
+
+  // --- Organizando Datas (Mais recentes primeiro para o dropdown, mais antigas primeiro para o gráfico de linha) ---
+  const datesAsc = unique(rawData.map(r=>r.date)).sort((a,b)=> new Date(a) - new Date(b));
+  const datesDesc = [...datesAsc].reverse();
+
+  // --- Popula selects ---
+  const dateSelect = document.getElementById('dateSelect');
+  const accountSelect = document.getElementById('accountSelect');
+  const typeSelect = document.getElementById('typeSelect');
+
+  // Popula dropdown de datas com a mais recente no topo
+  datesDesc.forEach(d=>{
+    const opt = document.createElement('option');
+    opt.value = d; 
+    opt.textContent = (new Date(d)).toLocaleDateString('pt-BR', {timeZone: 'UTC'}); // Evita erro de fuso horário
+    dateSelect.appendChild(opt);
+  });
+
+  // Popula dropdown de contas em ordem alfabética
+  const uniqueAccounts = unique(rawData.map(r=>r.account)).sort();
+  uniqueAccounts.forEach(a=>{
+    const opt = document.createElement('option'); opt.value = a; opt.textContent = a; accountSelect.appendChild(opt);
+  });
+
+  // --- Charts setup ---
+  let lineChart, barChart, pieChart;
+  
+  // Configuração global da fonte e cores do ChartJS adaptado para tema escuro
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = '#94a3b8';
+
+  function createCharts(){
+    const ctxL = document.getElementById('lineChart').getContext('2d');
+    const ctxB = document.getElementById('barChart').getContext('2d');
+    const ctxP = document.getElementById('pieChart').getContext('2d');
+
+    lineChart = new Chart(ctxL, {
+      type:'line',
+      data:{ labels:[], datasets:[] },
+      options:{
+        responsive:true,
+        maintainAspectRatio: false,
+        plugins:{
+          legend:{ position:'bottom', labels: { usePointStyle: true, boxWidth: 8, color: '#cbd5e1' } }
+        },
+        interaction:{ mode:'index', intersect:false },
+        scales:{ 
+          y: { 
+            grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+            ticks: { callback: v => 'R$ ' + (v/1000000 >= 1 ? (v/1000000).toFixed(1) + 'M' : (v/1000).toFixed(0) + 'k'), color: '#94a3b8' } 
+          },
+          x: { grid: { display: false, drawBorder: false }, ticks: { color: '#94a3b8' } }
+        }
+      }
+    });
+
+    barChart = new Chart(ctxB, {
+      type:'bar',
+      data:{ labels:[], datasets:[{label:'Saldo', data:[], backgroundColor: '#3b82f6', borderRadius: 4}] },
+      options:{
+        indexAxis:'y',
+        responsive:true,
+        maintainAspectRatio: false,
+        plugins:{ legend:{display:false} },
+        scales:{ 
+          x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { callback: v => 'R$ ' + (v/1000000 >= 1 ? (v/1000000).toFixed(1) + 'M' : (v/1000).toFixed(0) + 'k'), color: '#94a3b8' } },
+          y: { grid: { display: false }, ticks: { color: '#e2e8f0' } }
+        }
+      }
+    });
+
+    pieChart = new Chart(ctxP, {
+      type:'doughnut',
+      data:{ labels:[], datasets:[{data:[], backgroundColor: chartColors, borderWidth: 0}] },
+      options:{ 
+        responsive:true, 
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins:{
+          legend:{position:'right', labels: { usePointStyle: true, boxWidth: 8, color: '#cbd5e1' }}
+        } 
+      }
+    });
+  }
+
+  // --- Filtragem e atualização ---
+  function filterData(){
+    const date = dateSelect.value;
+    const account = accountSelect.value;
+    const type = typeSelect.value;
+    return rawData.filter(r=>{
+      if(date && r.date !== date) return false;
+      if(account !== "All" && r.account !== account) return false;
+      if(type !== "All" && r.type !== type) return false;
+      return true;
+    });
+  }
+
+  function updateKPIs(filtered){
+    const saldo = filtered.reduce((s,r)=> s + (Number(r.saldo)||0), 0);
+    const tm = (filtered.find(r=>r.totalMes != null) || {}).totalMes || null;
+    const tg = (filtered.find(r=>r.totalGeral != null) || {}).totalGeral || null;
+    document.getElementById('kpiSaldo').textContent = fmtBR(saldo);
+    document.getElementById('kpiTotalMes').textContent = fmtBR(tm);
+    document.getElementById('kpiTotalGeral').textContent = fmtBR(tg);
+  }
+
+  function updateLineChart(){
+    const selectedAccount = accountSelect.value;
+    const accountsToShow = selectedAccount === "All" ? uniqueAccounts : [selectedAccount];
+
+    // O gráfico de linha sempre mostra da data mais antiga para a mais recente (datesAsc)
+    lineChart.data.labels = datesAsc.map(d=> (new Date(d)).toLocaleDateString('pt-BR', {timeZone: 'UTC', month: 'short', year: '2-digit'}));
+
+    lineChart.data.datasets = accountsToShow.map((acct, idx) => {
+      const ds = datesAsc.map(dt=>{
+        const rec = rawData.find(r=>r.date===dt && r.account===acct);
+        return rec ? (Number(rec.saldo)||0) : 0;
+      });
+      return {
+        label: acct,
+        data: ds,
+        borderColor: chartColors[idx % chartColors.length],
+        backgroundColor: chartColors[idx % chartColors.length] + '20', // Opacidade
+        borderWidth: 2,
+        tension: 0.4, // Curva suave
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        fill: accountsToShow.length === 1 // Preenche apenas se for uma única conta
+      };
+    });
+
+    lineChart.update();
+  }
+
+  function updateBarChart(){
+    const date = dateSelect.value;
+    const type = typeSelect.value;
+    const filtered = rawData.filter(r=> r.date===date && (type==='All' || r.type===type));
+    
+    // Pega as 5 maiores contas para não poluir o gráfico
+    const sorted = filtered.slice().sort((a,b)=> b.saldo - a.saldo).slice(0, 5);
+    
+    barChart.data.labels = sorted.map(s=> s.account);
+    barChart.data.datasets[0].data = sorted.map(s=> s.saldo);
+    barChart.update();
+  }
+
+  function updatePieChart(){
+    const date = dateSelect.value;
+    const account = accountSelect.value;
+
+    let dataAgg = {};
+    if(account === "All"){
+      rawData.filter(r=> r.date===date).forEach(r=>{
+        dataAgg[r.type] = (dataAgg[r.type] || 0) + (Number(r.saldo)||0);
+      });
+    } else {
+      rawData.filter(r=> r.date===date && r.account===account).forEach(r=>{
+        dataAgg[r.type] = (dataAgg[r.type] || 0) + (Number(r.saldo)||0);
+      });
+    }
+
+    const labels = Object.keys(dataAgg);
+    pieChart.data.labels = labels;
+    pieChart.data.datasets[0].data = labels.map(l => dataAgg[l]);
+    pieChart.update();
+  }
+
+  function renderTable(filtered){
+    const wrap = document.getElementById('tableWrap');
+    if(filtered.length === 0){ 
+      wrap.innerHTML = `<div class="p-8 text-center text-slate-500">Sem dados para os filtros selecionados.</div>`; 
+      return; 
+    }
+    let html = `<table class="w-full text-sm text-left text-slate-300 whitespace-nowrap">
+                  <thead class="text-xs text-slate-400 uppercase bg-slate-800/80 sticky top-0">
+                    <tr>
+                      <th class="px-6 py-4 font-semibold rounded-tl-lg">Data</th>
+                      <th class="px-6 py-4 font-semibold">Conta</th>
+                      <th class="px-6 py-4 font-semibold">Tipo</th>
+                      <th class="px-6 py-4 font-semibold text-right">Saldo</th>
+                      <th class="px-6 py-4 font-semibold text-right hidden md:table-cell">Total Mês</th>
+                      <th class="px-6 py-4 font-semibold text-right hidden lg:table-cell rounded-tr-lg">Total Geral</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800/60">`;
+    filtered.forEach(r=>{
+      const badgeClass = r.type === 'CONTA CORRENTE' 
+        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
+        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+
+      html += `<tr class="hover:bg-slate-800/40 transition">
+        <td class="px-6 py-3 text-slate-400">${(new Date(r.date)).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
+        <td class="px-6 py-3 font-medium text-slate-200">${r.account}</td>
+        <td class="px-6 py-3">
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${badgeClass}">
+            ${r.type}
+          </span>
+        </td>
+        <td class="px-6 py-3 text-right font-medium text-white">${fmtBR(r.saldo)}</td>
+        <td class="px-6 py-3 text-right text-slate-500 hidden md:table-cell">${fmtBR(r.totalMes)}</td>
+        <td class="px-6 py-3 text-right text-slate-500 hidden lg:table-cell">${fmtBR(r.totalGeral)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+  }
+
+  function refreshAll(){
+    const filtered = filterData();
+    updateKPIs(filtered);
+    updateLineChart();
+    updateBarChart();
+    updatePieChart();
+    renderTable(filtered);
+  }
+
+  // --- Eventos ---
+  dateSelect.addEventListener('change', refreshAll);
+  accountSelect.addEventListener('change', refreshAll);
+  typeSelect.addEventListener('change', refreshAll);
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    dateSelect.value = datesDesc[0]; // Volta para a data mais recente
+    accountSelect.value = "All";
+    typeSelect.value = "All";
+    refreshAll();
+  });
+
+  // --- Inicialização ---
+  createCharts();
+  dateSelect.value = datesDesc[0]; // Setado como a data mais recente
+  typeSelect.value = "All";
+  accountSelect.value = "All";
+  refreshAll();
+
+</script>
+</body>
+</html>
